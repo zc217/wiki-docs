@@ -2,7 +2,7 @@
 title: home
 description: 
 published: true
-date: 2026-02-26T10:10:18.027Z
+date: 2026-02-26T10:10:44.287Z
 tags: 
 editor: markdown
 dateCreated: 2026-02-26T10:07:41.754Z
@@ -16,6 +16,6 @@ dateCreated: 2026-02-26T10:07:41.754Z
 
 ## 目录
 
-- [考勤](docs/考勤)
-- [报表](docs/报表)
-- [工作流](docs/工作流)
+- [考勤](考勤)
+- [报表](报表)
+- [工作流](工作流)
