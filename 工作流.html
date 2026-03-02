@@ -1,0 +1,676 @@
+<!--
+title: 工作流
+description: 
+published: true
+date: 2026-03-02T06:40:37.346Z
+tags: 
+editor: ckeditor
+dateCreated: 2026-02-26T10:06:36.131Z
+-->
+
+<h1 id="工作流" class="toc-header"> 工作流</h1>
+<h2 id="流程上下文后置处理" class="toc-header"> 流程上下文后置处理</h2>
+<ul>
+<li><strong>上下文</strong>：com.wyc.hr.wkflow.client.bp.service.LocalProcessContextPostProcessContext</li>
+<li><strong>返回值</strong>：java.lang.Void</li>
+<li><strong>描述</strong>：用于处理自定义的流程上下文处理逻辑。</li>
+<li><strong>Code</strong>：ProcessContextPostProcess</li>
+<li><strong>触发时机</strong>：在业务端，流程上下文构建之后，启动流程之前</li>
+</ul>
+<h2 id="流程管理" class="toc-header"> 流程管理</h2>
+<h3 id="类型设置" class="toc-header"> 类型设置</h3>
+<h4 id="员工自助申请控制脚本" class="toc-header"> 员工自助申请控制脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.rule.WorkflowDimensionSettingScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：员工自助申请控制脚本</p>
+</li>
+<li>
+<p><strong>Code</strong>：ESS_ENABLE_CHECK</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：用于执行工作流发起时进行范围控制。</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程可见权限.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">import com.wyc.hr.wkflow.model.rule.WorkflowDimensionSettingScriptContext
+
+
+def main() {
+    WorkflowDimensionSettingScriptContext context = ((WorkflowDimensionSettingScriptContext) ctx)
+    def employee = context.getEmployee()
+    def employeeIdList = [635147, 635154]
+    for (int i = 0; i &lt; employeeIdList.size(); i++) {
+        if (employeeIdList[i] == employee.id) {
+            return true
+        }
+    }
+    return false
+}
+
+
+</code></pre>
+<h4 id="工作流适配规则" class="toc-header"> 工作流适配规则</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.rule.WorkflowDimensionSettingScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于根据工作流类型解析对应的流程模型。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKFLOW_TYPE_RESOLVE</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行工作流类型解析脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：工作流适配规则.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">import com.wyc.hr.masterdata.client.dto.EmployeeDetailsDTO
+
+def main(){
+    EmployeeDetailsDTO employee = ctx.getEmployee()
+    //员工归属
+    String EmployeeAttribution = employee.currentJobInfo.getPersonnelGroupName()
+    //流程名称
+    String name = ""
+    if(EmployeeAttribution == "a" || EmployeeAttribution == null){
+        name = "调岗审批"
+    }
+    if(EmployeeAttribution == "b"){
+        name = "调岗流程"
+    }
+    return name
+}
+
+</code></pre>
+<h3 id="扩展设置" class="toc-header"> 扩展设置</h3>
+<h4 id="表单数据检查脚本" class="toc-header"> 表单数据检查脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.context.ext.validate.WorkflowValidationScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行工作流，表单数据检查脚本。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKFLOW_CONTEXT_VALIDATION</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：用于执行工作流，表单数据检查脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：表单数据检查脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package HRM.Workflow.WORKFLOW_CONTEXT_VALIDATION
+
+def main() {
+}
+
+
+
+// 获取上下文数据
+def context = context.getContext()
+
+// 获取表单数据
+def form = context.getForm()
+
+// 获取任务名称
+def taskName = context.getTaskName()
+
+// 获取操作
+def action = context.getAction()
+
+// 获取员工信息
+def employee = context.getEmployee()
+
+// 获取发起人信息
+def initiator = context.getInitiator()
+
+// 示例：验证上下文数据
+if (context != null) {
+    // 检查必要字段
+    if (!context.containsKey("requiredField")) {
+        throw new Exception("缺少必要字段：requiredField")
+    }
+
+    // 检查字段值
+    def fieldValue = context.get("requiredField")
+    if (fieldValue == null || fieldValue.toString().trim() == "") {
+        throw new Exception("必要字段值不能为空：requiredField")
+    }
+
+    // 记录日志
+    logger.debug("Workflow context validation script executed successfully")
+    logger.debug("Task name: " + taskName)
+    logger.debug("Employee: " + (employee != null ? employee.getFullName() : "null"))
+}
+
+// 验证通过，不需要返回值
+
+</code></pre>
+<h4 id="流程表单初始化" class="toc-header"> 流程表单初始化</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.context.ext.init.WorkflowInitExtensionContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行工作流，流程表单初始化。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKFLOW_INIT_EXTENSION</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：用于构建工作流启动前数据初始化上下文</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程表单初始化.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package com.wyc.hr.wkflow.model.context.ext.init
+
+import com.wyc.hr.wkflow.script.WorkflowScriptContext
+
+def main() {
+    def context = ctx as WorkflowInitExtensionContext
+
+    // 获取提交人
+    def initiator = context.getInitiator()
+
+    // 获取申请人
+    def applicant = context.getApplicant()
+
+}
+</code></pre>
+<h3 id="表单更新" class="toc-header"> 表单更新</h3>
+<h4 id="表单内容更新脚本" class="toc-header"> 表单内容更新脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.script.WorkflowScriptContextImpl</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：表单内容更新脚本。</p>
+</li>
+<li>
+<p><strong>Code</strong>：FORM_CONTENT_UPDATE</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：每次打开流程时执行</p>
+</li>
+<li>
+<p><strong>示例</strong>：表单内容更新脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">import com.wyc.frw.common.exception.BusinessException
+
+//实现main函数逻辑，返回计算结果；main函数不得删除；
+//可用对象：ctx用于访问当前上下文，logger用于日志，具体请参考api文档
+def main(){
+    throw new BusinessException("123");
+}
+</code></pre>
+<h3 id="步骤设置" class="toc-header"> 步骤设置</h3>
+<h4 id="流程步骤退回脚本" class="toc-header"> 流程步骤退回脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.step.script.WorkStepBackScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行流程步骤退回脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKSTEP_BACK_SCRIPT</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行流程步骤退回脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：工作步骤退回脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">import com.wyc.hr.wkflow.model.step.script.WorkStepBackScriptContext
+
+//脚本上下文是   当前步骤信息和 List&lt;可退回步骤ID和名称&gt;
+def main() {
+    WorkStepBackScriptContext context = ((WorkStepBackScriptContext) ctx)
+    def currentStep = context.getCurrentStep()
+    def transitionTargetSteps = context.getTransitionTargetSteps()
+    if (currentStep.getName() == "直属领导审批") transitionTargetSteps.removeIf { (it.workStepName == '开始') }
+    return transitionTargetSteps
+}
+</code></pre>
+<ul>
+<li><strong>示例</strong>：流程步骤退回脚本.groovy</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">import com.wyc.hr.wkflow.model.step.script.WorkStepBackScriptContext
+
+//脚本上下文是   当前步骤信息和 List&lt;可退回步骤ID和名称&gt;
+def main() {
+    WorkStepBackScriptContext context = ((WorkStepBackScriptContext) ctx)
+    def currentStep = context.getCurrentStep()
+    def transitionTargetSteps = context.getTransitionTargetSteps()
+    if (currentStep.getName() == "直属领导审批") transitionTargetSteps.removeIf { (it.workStepName == '开始') }
+    return transitionTargetSteps
+}
+</code></pre>
+<h4 id="流程步骤前处理扩展" class="toc-header"> 流程步骤前处理扩展</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.step.extension.WorkStepExtensionScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行流程步骤前处理扩展脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKSTEP_PRE_EXTENSION</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：流程步骤开始前</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程步骤前处理扩展脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as WorkStepExtensionScriptContext
+    def workStepId = context.getWorkStepId()
+    def workStepName = context.getWorkStepName()
+    def taskApprovalStatus = context.getTaskApprovalStatus()
+    def form = context.getForm()
+    def cont = context.getContext()
+    def initiator = context.getInitiator()
+    def employee = context.getEmployee()
+    def processInstanceId = context.getProcessInstanceId()
+    def externalProcessInstanceId = context.getExternalProcessInstanceId()
+}
+</code></pre>
+<h4 id="工作步骤前后处理扩展" class="toc-header"> 工作步骤前后处理扩展</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.step.extension.WorkStepExtensionScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行工作步骤前后处理扩展脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKSTEP_EXTENSION</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：1.流程步骤开始前，2.流程步骤结束后</p>
+</li>
+<li>
+<p><strong>示例</strong>：工作步骤后处理扩展脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as WorkStepExtensionScriptContext
+    def workStepId = context.getWorkStepId()
+    def workStepName = context.getWorkStepName()
+    def taskApprovalStatus = context.getTaskApprovalStatus()
+    def form = context.getForm()
+    def cont = context.getContext()
+    def initiator = context.getInitiator()
+    def employee = context.getEmployee()
+    def processInstanceId = context.getProcessInstanceId()
+    def externalProcessInstanceId = context.getExternalProcessInstanceId()
+}
+</code></pre>
+<h4 id="流程步骤后处理扩展" class="toc-header"> 流程步骤后处理扩展</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.step.extension.WorkStepExtensionScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行流程步骤后处理扩展脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKSTEP_POST_EXTENSION</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：流程步骤结束后</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程步骤后处理扩展脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as WorkStepExtensionScriptContext
+    def workStepId = context.getWorkStepId()
+    def workStepName = context.getWorkStepName()
+    def taskApprovalStatus = context.getTaskApprovalStatus()
+    def form = context.getForm()
+    def cont = context.getContext()
+    def initiator = context.getInitiator()
+    def employee = context.getEmployee()
+    def processInstanceId = context.getProcessInstanceId()
+    def externalProcessInstanceId = context.getExternalProcessInstanceId()
+}
+</code></pre>
+<h4 id="流程步骤逐级审批结束脚本" class="toc-header"> 流程步骤逐级审批结束脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.model.step.script.WorkStepScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行流程步骤逐级审批结束脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：PROGRESSIVE_END_SCRIPT</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行流程步骤逐级审批结束脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程步骤后处理扩展脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as WorkStepScriptContext
+    def employee = context.getEmployee()
+    def assignee = context.getAssignee()
+    return true
+}
+</code></pre>
+<ul>
+<li><strong>示例</strong>：工作步骤后处理扩展脚本.groovy</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as WorkStepScriptContext
+    def employee = context.getEmployee()
+    def assignee = context.getAssignee()
+    return true
+}
+</code></pre>
+<h3 id="流程模型" class="toc-header"> 流程模型</h3>
+<h4 id="流程后置处理脚本" class="toc-header"> 流程后置处理脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.script.WorkflowScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行后置处理脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：EXECUTE_POST_PROCESS_SCRIPT</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行流程后置处理脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程后置处理脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package HRM.Workflow.EXECUTE_POST_PROCESS_SCRIPT
+
+import com.wyc.hr.wkflow.script.WorkflowScriptContext
+
+
+def main(){
+    def context = ctx as WorkflowScriptContext
+    def instance = context.getProcessInstance()
+    def holder = context.getContext()
+    def form = context.getForm()
+    def employee = context.getEmployee()
+}
+
+</code></pre>
+<h3 id="权限设置" class="toc-header"> 权限设置</h3>
+<h4 id="自定义权限检查脚本" class="toc-header"> 自定义权限检查脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.setting.PermissionCheckScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行自定义权限检查脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：CUSTOMIZED_PERMISSION_CHECK</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行自定义权限检查脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：自定义权限检查脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as PermissionCheckScriptContext
+    def externalProcessInstanceId = context.getExternalProcessInstanceId()
+    def currentUserId = context.getCurrentUserId()
+    def currentEmployee = context.getCurrentEmployee()
+    return true
+}
+</code></pre>
+<h3 id="规则定义" class="toc-header"> 规则定义</h3>
+<h4 id="动态角色脚本" class="toc-header"> 动态角色脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.script.WorkflowScriptContextImpl</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行动态角色脚本逻辑</p>
+</li>
+<li>
+<p><strong>Code</strong>：DYNAMIC_ROLE_SCRIPT</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行动态角色脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：动态角色脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package HRM.Workflow.DYNAMIC_ROLE_SCRIPT
+
+import com.wyc.hr.wkflow.script.WorkflowScriptContext
+
+def main(){
+    def context = ctx as WorkflowScriptContext;
+    def employee = context.getEmployee()
+    def initiator = context.getInitiator()
+    def instance = context.getProcessInstance()
+
+    def approvers = new ArrayList&lt;String&gt;()
+    if (employee != null) {
+        approvers.add("approver1")
+        approvers.add("approver2")
+    }
+    return approvers
+}
+
+</code></pre>
+<h3 id="自定义流程" class="toc-header"> 自定义流程</h3>
+<h4 id="自定义工作流更新脚本" class="toc-header"> 自定义工作流更新脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.customized.type.CustomizedWorkflowUpdateRequestScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行自定义工作流更新脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：CUSTOMIZED_WORKFLOW_UPDATE</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行自定义工作流更新脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：自定义工作流更新脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package HRM.Workflow.CUSTOMIZED_WORKFLOW_UPDATE
+
+import com.wyc.hr.wkflow.customized.type.CustomizedWorkflowUpdateRequestScriptContext;
+
+// 该方法用于更新自定义流程申请，返回更新后的上下文 Map&lt;String, Object&gt; context;
+def updateRequest(){
+    //def updatedContext = [:]
+    // ...
+    //return updatedContext
+}
+
+</code></pre>
+<h3 id="流程设置" class="toc-header"> 流程设置</h3>
+<h4 id="流程上下文初始化脚本" class="toc-header"> 流程上下文初始化脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.script.WorkflowScriptContextImpl</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：流程上下文初始化脚本。</p>
+</li>
+<li>
+<p><strong>Code</strong>：WORKFLOW_CONTEXT_INIT</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：1.流程启动之后执行。<br>
+2.流程退回到开始步骤，开始步骤重新提交之后执行</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程上下文初始化脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">//实现main函数逻辑，返回计算结果；main函数不得删除；
+//可用对象：ctx用于访问当前上下文，logger用于日志，具体请参考api文档
+
+import com.wyc.frw.common.exception.BusinessException
+import com.wyc.hr.wkflow.script.WorkflowScriptContext
+
+/**
+ * 流程启动之后执行
+ */
+//实现main函数逻辑，返回计算结果；main函数不得删除；
+//可用对象：ctx用于访问当前上下文，logger用于日志，具体请参考api文档
+def main(){
+    throw new BusinessException("456");
+}
+
+/**
+ * 流程退回到开始步骤，开始步骤重新提交之后执行
+ */
+def onProcessRestarted() {
+
+}
+
+</code></pre>
+<h3 id="异常处理" class="toc-header"> 异常处理</h3>
+<h4 id="流程启动异常处理脚本" class="toc-header"> 流程启动异常处理脚本</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.setting.StartProcessExceptionScriptContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于执行流程启动异常处理脚本逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：START_PROCESS_EXCEPTION_HANDLER</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，执行流程启动异常处理脚本</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程启动异常处理脚本.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">def main() {
+    def context = ctx as StartProcessExceptionScriptContext
+    def externalProcessInstanceId = context.getExternalProcessInstanceId()
+    def exception = context.getException()
+    def currentEmployee = context.getCurrentEmployee()
+    def initiatorUserId = context.getInitiatorUserId()
+}
+</code></pre>
+<h2 id="工作流-1" class="toc-header"> 工作流</h2>
+<h3 id="流程实例" class="toc-header"> 流程实例</h3>
+<h4 id="流程上下文后置处理-1" class="toc-header"> 流程上下文后置处理</h4>
+<ul>
+<li>
+<p><strong>上下文</strong>：com.wyc.hr.wkflow.client.bp.service.LocalProcessContextPostProcessContext</p>
+</li>
+<li>
+<p><strong>返回值</strong>：java.lang.Void</p>
+</li>
+<li>
+<p><strong>描述</strong>：用于处理自定义的流程上下文处理逻辑。</p>
+</li>
+<li>
+<p><strong>Code</strong>：PROCESS_CONTEXT_POST_PROCESS</p>
+</li>
+<li>
+<p><strong>触发时机</strong>：在业务端，流程上下文构建之后，启动流程之前</p>
+</li>
+<li>
+<p><strong>示例</strong>：流程上下文后置处理演示.groovy</p>
+</li>
+</ul>
+<pre class="prismjs line-numbers" v-pre="true"><code class="language-groovy">package demo.script.process.contextPostProcess
+
+import com.wyc.hr.wkflow.client.bp.service.LocalProcessContextPostProcessContextImpl
+
+/**
+ * 演示如何在业务系统完成流程上下文构建之后：自定义工作流更新脚本.groovy
+ * 1、扩展业务约束检查逻辑
+ * 2、扩展业务逻辑完成数据收集
+ */
+def main() {
+    def scriptCtx = ctx as LocalProcessContextPostProcessContextImpl;
+    def context = scriptCtx.getProcessContext();
+
+}
+
+</code></pre>
